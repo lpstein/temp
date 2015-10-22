@@ -40,7 +40,7 @@ endif
 all: release/gotm
 test: all
 	@echo ""
-	@release/gotm
+	@release/gotm sample/collin.gif
 clean-all:
 	@rm -rf ./obj || true
 	@rm -rf ./release || true

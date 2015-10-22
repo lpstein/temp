@@ -1,5 +1,6 @@
 #include "precompiled.hpp"
 #include "gl.hpp"
+#include "assembly.hpp"
 
 using namespace std;
 
@@ -10,8 +11,19 @@ void glfw_error_callback(int error, const char *description)
 
 int main(int argc, char** argv)
 {
-  cout << "Booting up GLFW" << endl;
+  if (argc < 2)
+  {
+    cout << "Must specify a gif to use" << endl;
+    return 1;
+  }
+  if (argc > 2)
+  {
+    cout << "Too many arguments, I'm confused" << endl;
+    return 1;
+  }
 
+  // Bootstrap
+  cout << "Booting up GLFW" << endl;
   if (!glfwInit())
   {
     throw runtime_error("Failed to initialize GLFW");
@@ -40,11 +52,15 @@ int main(int argc, char** argv)
   int width_pixels, height_pixels;
   glfwGetWindowSize(window, &width_points, &height_points);
   glfwGetFramebufferSize(window, &width_pixels, &height_pixels);
+  float scale = (float)width_pixels / (float)width_points;
+  cout << "Window is " << width_points << "x" << height_points
+       << " with a pixel density of " << scale << endl;
 
   // GL setup
-  gl::init(width_pixels, height_pixels, (float)width_pixels / (float)width_points);
+  gl::init(width_pixels, height_pixels, scale);
 
   // Main loop
+  assembly::go(argv[1]);
   while (!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
