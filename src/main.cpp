@@ -1,7 +1,5 @@
-#include <stdexcept>
-#include <iostream>
-
-#include <GLFW/glfw3.h>
+#include "precompiled.hpp"
+#include "gl.hpp"
 
 using namespace std;
 
@@ -37,15 +35,21 @@ int main(int argc, char** argv)
   cout << "Window ready" << endl;
   cout << "Rollin' with GL" << glGetString(GL_VERSION) << endl;
 
+  // Figure out sizing n stuff
+  int width_points, height_points;
+  int width_pixels, height_pixels;
+  glfwGetWindowSize(window, &width_points, &height_points);
+  glfwGetFramebufferSize(window, &width_pixels, &height_pixels);
+
   // GL setup
-  glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+  gl::init(width_pixels, height_pixels, (float)width_pixels / (float)width_points);
 
   // Main loop
   while (!glfwWindowShouldClose(window))
   {
     glfwPollEvents();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // TODO - draw
+    gl::render();
     glfwSwapBuffers(window);
   }
 

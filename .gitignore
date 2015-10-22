@@ -1,3 +1,4 @@
 obj/
 release/
 *.o
+*.pch

@@ -9,12 +9,24 @@ GLFW := obj/vendor/lib/libglfw3.a
 GIFLIB := obj/vendor/dgif_lib.o obj/vendor/gif_err.o obj/vendor/gifalloc.o
 VENDOR := $(GIFLIB) $(GLFW)
 
-# These flags aren't used for vendor code at all
-CXXFLAGS := -c -std=c++11 -g -L obj/vendor/lib # Base
-CXXFLAGS += -I vendor/glfw-3.1.2/include -l glfw3 # Include GLFW
-CXXFLAGS += -I vendor/giflib-5.1.1/lib # Include giflib
+# Name of the PCH source file
+PCH := src/precompiled.hpp
+PCH_TARGET := $(addsuffix .pch,$(PCH))
 
-# These flags are used for the final compilation and are platform specific
+# The compiler we use.  Should probalby be platform specific...
+CXX := clang++
+
+# These flags aren't used for vendor code at all
+INCLUDES += -I vendor/glfw-3.1.2/include
+INCLUDES += -I vendor/giflib-5.1.1/lib
+CXXFLAGS := -c -std=c++11 -g
+CXXFLAGS += $(INCLUDES)
+
+# Global final build flags
+BUILD_FLAGS := -L obj/vendor/lib
+BUILD_FLAGS += -l glfw3
+
+# Platform specific portion of final build flags
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Darwin)
 	BUILD_FLAGS += -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
@@ -29,10 +41,16 @@ all: release/gotm
 test: all
 	@echo ""
 	@release/gotm
-clean:
+clean-all:
 	@rm -rf ./obj || true
 	@rm -rf ./release || true
+	@rm -rf ./src/*.pch || true
 	@echo "Cleaned up"
+clean:
+	@rm -rf ./obj/*.o || true
+	@rm -rf ./release || true
+	@rm -rf ./src/*.pch || true
+	@echo "Cleaned up non-vendor"
 dirs:
 	@mkdir -p obj/
 	@mkdir -p obj/vendor
@@ -42,11 +60,19 @@ dirs:
 
 # Actual compilation work
 
-obj/%.o: src/%.cpp | dirs
-	g++ $(CXXFLAGS) $< -o $@
+obj/%.o: src/%.cpp $(PCH_TARGET) | dirs
+	@echo $<
+	@$(CXX) $(CXXFLAGS) -include $(PCH) $< -o $@
 
 release/gotm: $(VENDOR) $(OBJECTS) | dirs
-	g++ $(BUILD_FLAGS) $(OBJECTS) $(VENDOR) -o $@
+	@echo $@
+	@$(CXX) $(BUILD_FLAGS) $(OBJECTS) $(VENDOR) -o $@
+
+# Precompiled header
+
+$(PCH_TARGET): $(PCH)
+	@echo $<
+	@$(CXX) $(CXXFLAGS) -x c++-header $< -o $@
 
 # Vendor
 
