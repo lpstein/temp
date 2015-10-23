@@ -13,6 +13,7 @@ static std::string frag =
 // "   fragment_color = vertex_color;\n"
 "   float l = texture(tex, uv).r;\n"
 "   fragment_color = texture(tex, uv);\n"
+"   if (fragment_color.w != 1.0f) { discard; }\n"
 // "   fragment_color = vec4(l, l, l, 1.0f);\n"
 // "  fragment_color = vec4(uv, 0.0f, 1.0f);\n"
 "}\n"
@@ -29,7 +30,8 @@ static std::string vert =
 "{\n"
 "  vertex_color = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
 "  gl_Position = vec4(location, 0.0f, 1.0f);\n"
-"  uv = (location + 1.0f)/ 2.0f;\n"
+"  uv = location + 0.5f;\n"
+"  uv.y = 1.0f - uv.y;\n" // Flip UV due to ogl have weird coord system
 "}\n"
 "";
 
@@ -39,6 +41,23 @@ namespace gl
   unsigned int vao = -1;
   unsigned int vbo = -1;
   unsigned int tex_loc = -1;
+
+  bool must_set_texture = false;
+  int tex_width = 0;
+  int tex_height = 0;
+  std::vector<unsigned char> tex_data;
+
+  void actually_set_texture()
+  {
+    GLenum err = GL_NO_ERROR;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_data.data());
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+      std::cout << "b: " << gluErrorString(err) << std::endl;
+    }
+
+    must_set_texture = false;
+  }
 
   void init(int w, int h, float scale)
   {
@@ -71,10 +90,10 @@ namespace gl
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   }
 
   void render()
@@ -85,48 +104,24 @@ namespace gl
       std::cout << "r: " << gluErrorString(err) << std::endl;
     }
 
+    if (must_set_texture)
+    {
+      actually_set_texture();
+    }
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(tex_loc, 0);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
   }
 
-  // Temp
-  void set_texture(int w, int h, unsigned char *data)
+  // This ain't threadsafe on ARM
+  void set_texture(int w, int h, std::vector<unsigned char>data)
   {
-    glBindTexture(GL_TEXTURE_2D, texture);
-    unsigned int datad[] = {
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-      0, 128, 256, 255,
-    };
-    GLenum err = GL_NO_ERROR;
-    while ((err = glGetError()) != GL_NO_ERROR)
-    {
-      std::cout << "a: " << gluErrorString(err) << std::endl;
-    }
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, &datad);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, data);
-    while ((err = glGetError()) != GL_NO_ERROR)
-    {
-      std::cout << "b: " << gluErrorString(err) << std::endl;
-    }
+    tex_width = w;
+    tex_height = h;
+    tex_data = data;
+    must_set_texture = true;
   }
 
   unsigned int compile_shader(unsigned int type, std::string& source)

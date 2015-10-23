@@ -30,6 +30,7 @@ BUILD_FLAGS += -l glfw3
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Darwin)
 	BUILD_FLAGS += -framework Cocoa -framework OpenGL -framework IOKit -framework CoreVideo
+	BUILD_FLAGS += -l pthread
 endif
 ifeq ($(UNAME),Linux)
 	# TODO
@@ -40,7 +41,8 @@ endif
 all: release/gotm
 test: all
 	@echo ""
-	@release/gotm sample/collin.gif
+	# @release/gotm sample/collin.gif
+	@release/gotm sample/flytrap.gif
 clean-all:
 	@rm -rf ./obj || true
 	@rm -rf ./release || true
