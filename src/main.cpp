@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   // Create window
-  GLFWwindow *window = glfwCreateWindow(800, 800, "gif of the magic", nullptr, nullptr);
+  GLFWwindow *window = glfwCreateWindow(400, 400, "gif of the magic", nullptr, nullptr);
   if (window == nullptr)
   {
     throw runtime_error("Failed to create GLFW window");

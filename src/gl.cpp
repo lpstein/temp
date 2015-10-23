@@ -23,6 +23,7 @@ static std::string vert =
 "#version 410\n"
 "\n"
 "layout(location = 0) in vec2 location;\n"
+"layout(location = 1) in vec2 tex_coord;\n"
 "out vec4 vertex_color;\n"
 "out vec2 uv;\n"
 "\n"
@@ -30,7 +31,7 @@ static std::string vert =
 "{\n"
 "  vertex_color = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n"
 "  gl_Position = vec4(location, 0.0f, 1.0f);\n"
-"  uv = location + 0.5f;\n"
+"  uv = tex_coord;\n"
 "  uv.y = 1.0f - uv.y;\n" // Flip UV due to ogl have weird coord system
 "}\n"
 "";
@@ -47,6 +48,26 @@ namespace gl
   int tex_height = 0;
   std::vector<unsigned char> tex_data;
 
+  void fill_data_buffer(int w, int h)
+  {
+    float scale_x = 1.0f;
+    float scale_y = 1.0f;
+    if (w > h) {
+      scale_y = float(h) / float(w);
+    } else if (h < w) {
+      scale_x = float(w) / float(h);
+    }
+    float data[] = { // x, y, u, v
+      scale_x * -1.0f, scale_y * -1.0f, 0.0f, 0.0f,
+      scale_x * +1.0f, scale_y * -1.0f, 1.0f, 0.0f,
+      scale_x * +1.0f, scale_y * +1.0f, 1.0f, 1.0f,
+      scale_x * -1.0f, scale_y * +1.0f, 0.0f, 1.0f
+    };
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
+  }
+
   void actually_set_texture()
   {
     GLenum err = GL_NO_ERROR;
@@ -57,6 +78,7 @@ namespace gl
     }
 
     must_set_texture = false;
+    fill_data_buffer(tex_width, tex_height);
   }
 
   void init(int w, int h, float scale)
@@ -68,25 +90,13 @@ namespace gl
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    float scale_x = 1.0f;
-    float scale_y = 1.0f;
-    if (w > h) {
-      scale_y = float(w) / float(h);
-    } else if (h < w) {
-      scale_x = float(h) / float(w);
-    }
-    float data[] = {
-      scale_x * -0.5f, scale_y * -0.5f,
-      scale_x * +0.5f, scale_y * -0.5f,
-      scale_x * +0.5f, scale_y * +0.5f,
-      scale_x * -0.5f, scale_y * +0.5f
-    };
     glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(data), &data, GL_STATIC_DRAW);
+    fill_data_buffer(0, 0);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(float) * 4, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(float) * 4, (const void*)(sizeof(float) * 2));
 
     int vertex_shader = compile_shader(GL_VERTEX_SHADER, vert);
     int fragment_shader = compile_shader(GL_FRAGMENT_SHADER, frag);
@@ -116,6 +126,7 @@ namespace gl
       actually_set_texture();
     }
 
+    glClear(GL_COLOR_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(tex_loc, 0);

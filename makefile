@@ -19,7 +19,7 @@ CXX := clang++
 # These flags aren't used for vendor code at all
 INCLUDES += -I vendor/glfw-3.1.2/include
 INCLUDES += -I vendor/giflib-5.1.1/lib
-CXXFLAGS := -c -std=c++1y -g
+CXXFLAGS := -c -std=c++1y -g -Wno-deprecated-declarations
 CXXFLAGS += $(INCLUDES)
 
 # Global final build flags
