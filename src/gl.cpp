@@ -68,11 +68,18 @@ namespace gl
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
+    float scale_x = 1.0f;
+    float scale_y = 1.0f;
+    if (w > h) {
+      scale_y = float(w) / float(h);
+    } else if (h < w) {
+      scale_x = float(h) / float(w);
+    }
     float data[] = {
-      -0.5f, -0.5f,
-      +0.5f, -0.5f,
-      +0.5f, +0.5f,
-      -0.5f, +0.5f
+      scale_x * -0.5f, scale_y * -0.5f,
+      scale_x * +0.5f, scale_y * -0.5f,
+      scale_x * +0.5f, scale_y * +0.5f,
+      scale_x * -0.5f, scale_y * +0.5f
     };
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
