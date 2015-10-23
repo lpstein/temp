@@ -3,8 +3,10 @@
 namespace analyze
 {
   Gif::Gif(const std::string& filename)
-    : gif(DGifOpenFileName(filename.c_str(), &error), cleanup_gif)
+    : error(0), gif(DGifOpenFileName(filename.c_str(), &error), cleanup_gif)
   {
+    // gif.reset(DGifOpenFileName(filename.c_str(), &error));
+
     if (error != 0)
     {
       throw std::runtime_error("Failed to open gif");

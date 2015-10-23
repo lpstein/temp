@@ -1,5 +1,6 @@
 #include "assembly.hpp"
 #include "analyze.hpp"
+#include "gl.hpp"
 
 namespace assembly
 {
@@ -10,5 +11,8 @@ namespace assembly
     gif.reset(new analyze::Gif(filename));
 
     std::cout << "Loaded " << filename << std::endl;
+    auto g = gif.get()->gif.get();
+
+    gl::set_texture(g->SWidth, g->SHeight, g->SavedImages[0].RasterBits);
   }
 }
