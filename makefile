@@ -38,11 +38,13 @@ endif
 
 # Lifecycle stuff
 
-all: release/gotm
+all: release/gotm | prereqs
+prereqs:
+	@which cmake >/dev/null || brew install cmake
 test: all
 	@echo ""
-	# @release/gotm sample/collin.gif
-	@release/gotm sample/flytrap.gif
+	@release/gotm sample/collin.gif
+	# @release/gotm sample/flytrap.gif
 clean-all:
 	@rm -rf ./obj || true
 	@rm -rf ./release || true

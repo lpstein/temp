@@ -10,12 +10,13 @@ static std::string frag =
 "\n"
 "void main()\n"
 "{\n"
-// "   fragment_color = vertex_color;\n"
-"   float l = texture(tex, uv).r;\n"
-"   fragment_color = texture(tex, uv);\n"
+"   int division = 30;\n"
+"   float x = uv.x * division;\n"
+"   x = x - floor(x);\n"
+"   float y = uv.y * division;\n"
+"   y = y - floor(y);\n"
+"   fragment_color = texture(tex, vec2(x, y));\n"
 "   if (fragment_color.w != 1.0f) { discard; }\n"
-// "   fragment_color = vec4(l, l, l, 1.0f);\n"
-// "  fragment_color = vec4(uv, 0.0f, 1.0f);\n"
 "}\n"
 "";
 
